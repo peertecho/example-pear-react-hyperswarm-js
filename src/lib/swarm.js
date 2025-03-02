@@ -40,5 +40,6 @@ async function joinSwarm (topicBuffer) {
 
 export function sendMessage (msg) {
   const peers = [...swarm.connections]
+  console.log('🚀 ~ sendMessage ~ peers:', peers)
   for (const peer of peers) peer.write(msg)
 }
