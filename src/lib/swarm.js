@@ -8,7 +8,6 @@ const { updates, reload, teardown } = Pear
 
 updates(() => reload())
 
-
 const swarm = new Hyperswarm()
 teardown(() => swarm.destroy())
 
