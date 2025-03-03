@@ -1,7 +1,7 @@
 /** @typedef {import('pear-interface')} */ 
 
 import Hyperswarm from 'hyperswarm'
-import crypto, { keyPair } from 'hypercore-crypto'
+import crypto from 'hypercore-crypto'
 import b4a from 'b4a'
 
 const { updates, reload, teardown } = Pear
