@@ -12,5 +12,5 @@ const root = createRoot(element)
 root.render(
   <StrictMode>
     <App />
-  </StrictMode>,
+  </StrictMode>
 )

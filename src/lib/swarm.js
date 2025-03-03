@@ -1,4 +1,5 @@
-/** @typedef {import('pear-interface')} */ 
+/* global Pear */
+/** @typedef {import('pear-interface')} */
 
 import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
@@ -8,32 +9,29 @@ const { updates, reload, teardown } = Pear
 
 updates(() => reload())
 
-export async function createSwarm ({ name, onError, onData, onUpdate }) {
-  const seed = crypto.hash(Buffer.from(name, 'utf-8'))
-  const swarm = new Hyperswarm({ seed })
-  teardown(() => swarm.destroy())
+const swarm = new Hyperswarm()
+teardown(() => swarm.destroy())
 
+export async function onSwarm ({ onError, onData, onUpdate }) {
   swarm.on('connection', (peer) => {
     const name = b4a.toString(peer.remotePublicKey, 'hex').substr(0, 6)
     peer.on('error', (err) => onError({ peer, name, err }))
     peer.on('data', (msg) => onData({ peer, name, msg }))
   })
   swarm.on('update', () => onUpdate(swarm.connections.size))
-
-  return swarm
 }
 
-export async function createTopic(swarm) {
+export async function createTopic () {
   const topicBuffer = crypto.randomBytes(32)
-  return joinSwarm(swarm, topicBuffer)
+  return joinSwarm(topicBuffer)
 }
 
-export async function joinTopic (swarm, topic) {
+export async function joinTopic (topic) {
   const topicBuffer = b4a.from(topic, 'hex')
-  return joinSwarm(swarm, topicBuffer)
+  return joinSwarm(topicBuffer)
 }
 
-async function joinSwarm (swarm, topicBuffer) {
+async function joinSwarm (topicBuffer) {
   const discovery = swarm.join(topicBuffer, { client: true, server: true })
   await discovery.flushed()
 
@@ -41,7 +39,7 @@ async function joinSwarm (swarm, topicBuffer) {
   return topic
 }
 
-export function sendMessage (swarm, msg) {
+export function sendMessage (msg) {
   const peers = [...swarm.connections]
   for (const peer of peers) peer.write(msg)
 }

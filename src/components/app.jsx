@@ -1,72 +1,53 @@
-import { useState } from "react"
+/* global alert */
+import { useEffect, useState } from 'react'
 
-import { createSwarm, createTopic, joinTopic, sendMessage } from "../lib/swarm"
+import { createTopic, joinTopic, onSwarm, sendMessage } from '../lib/swarm'
 
 export default function App () {
   const [error, setError] = useState('')
-  
-  const [inputName, setInputName] = useState('')
-  const [swarm, setSwarm] = useState()
+
   const [size, setSize] = useState(0)
 
   const [newTopic, setNewTopic] = useState('')
-  
-  const [inputTopic, setInputTopic] = useState('')
-  const [statusJoin, setStatusJoin] = useState('')
-  
+
+  const [inputJoinTopic, setInputJoinTopic] = useState('')
+  const [statusJoinTopic, setStatusJoinTopic] = useState('')
+
   const [inputMessage, setInputMessage] = useState('')
   const [messages, setMessages] = useState([])
 
-  const onStart = async () => {
-    if (!inputName) {
-      alert('Please enter a unique name per app instance')
-      return
-    }
-    const newSwarm = await createSwarm({
-      name: inputName,
+  useEffect(() => {
+    onSwarm({
       onError: (err) => {
         console.error(err)
         setError(err)
       },
-      onUpdate: (size) => setSize(size),
       onData: (data) => {
         console.log(data)
         setMessages((items) => [...items, data])
       },
+      onUpdate: (size) => setSize(size)
     })
-    setSwarm(newSwarm)
-  }
+  }, [])
 
   const onCreateTopic = async () => {
-    if (!swarm) {
-      alert('Please start the app first')
-      return
-    }
     setNewTopic('creating...')
-    const topic = await createTopic(swarm)
+    const topic = await createTopic()
     setNewTopic(topic)
   }
 
   const onJoinTopic = async () => {
-    if (!swarm) {
-      alert('Please start the app first')
-      return
-    }
-    if (!inputTopic) {
+    if (!inputJoinTopic) {
       alert('Please enter a topic')
       return
     }
-    setStatusJoin('Joining...')
-    const topic = await joinTopic(swarm, inputTopic)
-    setStatusJoin(`Joined ${topic}`)
-    setInputTopic('')
+    setStatusJoinTopic('Joining...')
+    const topic = await joinTopic(inputJoinTopic)
+    setStatusJoinTopic(`Joined ${topic}`)
+    setInputJoinTopic('')
   }
 
   const onSendMessage = () => {
-    if (!swarm) {
-      alert('Please start the app first')
-      return
-    }
     if (!size) {
       alert('Please join a topic')
       return
@@ -75,7 +56,7 @@ export default function App () {
       alert('Please enter a message')
       return
     }
-    sendMessage(swarm, inputMessage)
+    sendMessage(inputMessage)
     setInputMessage('')
   }
 
@@ -86,34 +67,28 @@ export default function App () {
 
       <hr />
 
-      <h2>Your name</h2>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <input type="text" value={inputName} onChange={(evt) => setInputName(evt.currentTarget.value)} />
-        <button onClick={onStart}>Start</button>
-      </div>
-      <p>Hi: {swarm ? inputName : ''}</p>
-
-      <hr />
-
       <button onClick={onCreateTopic}>Create topic</button>
       <p>New topic: {newTopic}</p>
-      
+
       <hr />
 
       <h2>Join topic</h2>
       <div>
-        <textarea type="text" value={inputTopic} onChange={(evt) => setInputTopic(evt.currentTarget.value)} />
+        <textarea type='text' value={inputJoinTopic} onChange={(evt) => setInputJoinTopic(evt.currentTarget.value)} />
       </div>
-      <button onClick={onJoinTopic}>Join topic {inputTopic}</button>
-      <div>{statusJoin}</div>
+      <button onClick={onJoinTopic}>Join topic {inputJoinTopic}</button>
+      <div>{statusJoinTopic}</div>
 
       <hr />
 
       <h2>Message</h2>
       <div>
-        <textarea type="text" value={inputMessage} onChange={(evt) => setInputMessage(evt.currentTarget.value)} />
+        <textarea type='text' value={inputMessage} onChange={(evt) => setInputMessage(evt.currentTarget.value)} />
       </div>
       <button onClick={onSendMessage}>Send message</button>
+
+      <hr />
+
       <p>Connections: {size}</p>
       <p>Messages: </p>
       {messages.map((item, index) => (
