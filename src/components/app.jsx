@@ -1,51 +1,81 @@
 import { useState } from "react"
 
-import { createTopic, joinTopic, sendMessage, useSwarm } from "../lib/swarm"
+import { createSwarm, createTopic, joinTopic, sendMessage } from "../lib/swarm"
 
 export default function App () {
   const [error, setError] = useState('')
-  const [newTopic, setNewTopic] = useState('')
-  const [inputTopic, setInputTopic] = useState('')
-  const [joinStatus, setJoinStatus] = useState('')
-  const [inputMessage, setInputMessage] = useState('')
+  
+  const [inputName, setInputName] = useState('')
+  const [swarm, setSwarm] = useState()
   const [size, setSize] = useState(0)
+
+  const [newTopic, setNewTopic] = useState('')
+  
+  const [inputTopic, setInputTopic] = useState('')
+  const [statusJoin, setStatusJoin] = useState('')
+  
+  const [inputMessage, setInputMessage] = useState('')
   const [messages, setMessages] = useState([])
 
-  useSwarm({
-    onError: (err) => {
-      console.error(err)
-      setError(err)
-    },
-    onUpdate: (size) => setSize(size),
-    onData: (data) => {
-      console.log(data)
-      setMessages((items) => [...items, data])
-    },
-  })
+  const onStart = async () => {
+    if (!inputName) {
+      alert('Please enter a unique name per app instance')
+      return
+    }
+    const newSwarm = await createSwarm({
+      name: inputName,
+      onError: (err) => {
+        console.error(err)
+        setError(err)
+      },
+      onUpdate: (size) => setSize(size),
+      onData: (data) => {
+        console.log(data)
+        setMessages((items) => [...items, data])
+      },
+    })
+    setSwarm(newSwarm)
+  }
 
   const onCreateTopic = async () => {
+    if (!swarm) {
+      alert('Please start the app first')
+      return
+    }
     setNewTopic('creating...')
-    const topic = await createTopic()
+    const topic = await createTopic(swarm)
     setNewTopic(topic)
   }
 
   const onJoinTopic = async () => {
+    if (!swarm) {
+      alert('Please start the app first')
+      return
+    }
     if (!inputTopic) {
       alert('Please enter a topic')
       return
     }
-    setJoinStatus('Joining...')
-    const topic = await joinTopic(inputTopic)
-    setJoinStatus(`Joined ${topic}`)
+    setStatusJoin('Joining...')
+    const topic = await joinTopic(swarm, inputTopic)
+    setStatusJoin(`Joined ${topic}`)
     setInputTopic('')
   }
 
   const onSendMessage = () => {
+    if (!swarm) {
+      alert('Please start the app first')
+      return
+    }
+    if (!size) {
+      alert('Please join a topic')
+      return
+    }
     if (!inputMessage) {
       alert('Please enter a message')
       return
     }
-    sendMessage(inputMessage)
+    sendMessage(swarm, inputMessage)
     setInputMessage('')
   }
 
@@ -53,6 +83,17 @@ export default function App () {
     <div style={{ padding: 10, background: 'cyan' }}>
       <h1>MyApp</h1>
       <pre>{error}</pre>
+
+      <hr />
+
+      <h2>Your name</h2>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <input type="text" value={inputName} onChange={(evt) => setInputName(evt.currentTarget.value)} />
+        <button onClick={onStart}>Start</button>
+      </div>
+      <p>Hi: {swarm ? inputName : ''}</p>
+
+      <hr />
 
       <button onClick={onCreateTopic}>Create topic</button>
       <p>New topic: {newTopic}</p>
@@ -64,7 +105,7 @@ export default function App () {
         <textarea type="text" value={inputTopic} onChange={(evt) => setInputTopic(evt.currentTarget.value)} />
       </div>
       <button onClick={onJoinTopic}>Join topic {inputTopic}</button>
-      <div>{joinStatus}</div>
+      <div>{statusJoin}</div>
 
       <hr />
 

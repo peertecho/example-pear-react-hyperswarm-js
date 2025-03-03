@@ -4,33 +4,35 @@ import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
 import b4a from 'b4a'
 
-const { updates, reload, teardown } = Pear
+const { updates, reload, teardown, config } = Pear
 
 updates(() => reload())
 
-const swarm = new Hyperswarm()
-teardown(() => swarm.destroy())
+export async function createSwarm ({ onError, onData, onUpdate }) {
+  const swarm = new Hyperswarm()
+  teardown(() => swarm.destroy())
 
-export function useSwarm ({ onError, onData, onUpdate }) {
   swarm.on('connection', (peer) => {
     const name = b4a.toString(peer.remotePublicKey, 'hex').substr(0, 6)
     peer.on('error', (err) => onError({ peer, name, err }))
     peer.on('data', (msg) => onData({ peer, name, msg }))
   })
   swarm.on('update', () => onUpdate(swarm.connections.size))
+
+  return swarm
 }
 
-export async function createTopic() {
+export async function createTopic(swarm) {
   const topicBuffer = crypto.randomBytes(32)
-  return joinSwarm(topicBuffer)
+  return joinSwarm(swarm, topicBuffer)
 }
 
-export async function joinTopic (topic) {
+export async function joinTopic (swarm, topic) {
   const topicBuffer = b4a.from(topic, 'hex')
-  return joinSwarm(topicBuffer)
+  return joinSwarm(swarm, topicBuffer)
 }
 
-async function joinSwarm (topicBuffer) {
+async function joinSwarm (swarm, topicBuffer) {
   const discovery = swarm.join(topicBuffer, { client: true, server: true })
   await discovery.flushed()
 
@@ -38,8 +40,7 @@ async function joinSwarm (topicBuffer) {
   return topic
 }
 
-export function sendMessage (msg) {
+export function sendMessage (swarm, msg) {
   const peers = [...swarm.connections]
-  console.log('🚀 ~ sendMessage ~ peers:', peers)
   for (const peer of peers) peer.write(msg)
 }
