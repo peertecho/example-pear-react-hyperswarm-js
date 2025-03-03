@@ -1,3 +1,8 @@
+# Overview
+- Example of Pear desktop app with Javascript + React + Hyperswarm
+- Multiple app instances can run concurrently (same machine or different machines) 
+to connect and send message to each other with Hyperswarm streams
+
 # Getting started
 ## Prod mode
 ```shell
