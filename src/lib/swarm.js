@@ -8,8 +8,9 @@ const { updates, reload, teardown } = Pear
 
 updates(() => reload())
 
-export async function createSwarm ({ onError, onData, onUpdate }) {
-  const swarm = new Hyperswarm()
+export async function createSwarm ({ name, onError, onData, onUpdate }) {
+  const keyPair = Buffer.from(name, 'utf-8')
+  const swarm = new Hyperswarm({ keyPair })
   teardown(() => swarm.destroy())
 
   swarm.on('connection', (peer) => {
