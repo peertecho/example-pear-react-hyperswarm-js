@@ -4,9 +4,10 @@ import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
 import b4a from 'b4a'
 
-const { updates, teardown } = Pear
+const { updates, reload, teardown } = Pear
 
-updates(() => Pear.reload())
+updates(() => reload())
+
 
 const swarm = new Hyperswarm()
 teardown(() => swarm.destroy())
